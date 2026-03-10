@@ -22,7 +22,7 @@ function GanttView() {
                     </div >
                     <div>
                         {User_Projects.map((p) => {
-                            const StartDate = new Date(p.id);
+                             const StartDate = new Date(p.startDate || p.createdAt);
                             const Due_Date = new Date(p.date);
                             const current_Date = new Date(Date.now());
 

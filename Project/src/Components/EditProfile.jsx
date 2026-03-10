@@ -3,7 +3,7 @@ import "./LoginPage.css"
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux";
 // NEW LINE
-import { addProjectDb, deleteProjectDb, editProjectDb, toggleTheme, fetchUserProjects } from "./Redux";
+import { addProjectDb, deleteProjectDb, editProjectDb, toggleTheme, fetchProjects } from "./Redux";
 function EditProfile() {
     const CURRENT_USER = JSON.parse(localStorage.getItem("CURRENTUSER"));
     const navigate = useNavigate();

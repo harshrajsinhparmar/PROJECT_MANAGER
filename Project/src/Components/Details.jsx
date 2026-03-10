@@ -7,9 +7,8 @@ function Details() {
     const navigate = useNavigate();
 
     // Clean the ID and find the project
-    const cleanId = id.replace(':', "");
-    const projects = JSON.parse(localStorage.getItem("Projects")) || [];
-    const project = projects.find((p) => p.id == cleanId);
+    const projects = useSelector((state) => state.registration.Projects);
+    const project = projects.find((p) => p._id === id);
 
     // Safety Check: If project doesn't exist
     if (!project) {

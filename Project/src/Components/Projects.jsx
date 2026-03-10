@@ -1,19 +1,33 @@
-import React, { useState } from "react"
+import React, { useEffect,useState } from "react"
 import { useDispatch, useSelector } from "react-redux";
 // NEW LINE
-import { addProjectDb, deleteProjectDb, editProjectDb, toggleTheme, fetchUserProjects } from "./Redux";
+import { addProjectDb, deleteProjectDb, editProjectDb, toggleTheme, fetchProjects } from "./Redux";
 import { createPortal } from "react-dom";
 import './Projects.css'
 import { Navigate, NavLink, useNavigate } from "react-router-dom";
 function Projects() {
+
     const navigate = useNavigate();
+    
+
     const [Title, setTitle] = useState();
     const [Description, setDesc] = useState()
     const [Status, setStatus] = useState("active")
     const [Due_Date, setDate] = useState()
 
     const CURRENTUSER_ID = JSON.parse(localStorage.getItem("CURRENTUSER"))[0].id;
-    const C_USER_PROJECTS = useSelector((state) => state.registration.Projects.filter((p) => p.user_id == CURRENTUSER_ID));
+
+    useEffect(() => {
+        dispatch(fetchProjects(CURRENTUSER_ID));
+    }, []);
+
+
+
+    const C_USER_PROJECTS = useSelector((state) =>
+        state.registration.Projects.filter((p) => p.user_id == CURRENTUSER_ID)
+    );
+
+
 
 
 
@@ -27,12 +41,24 @@ function Projects() {
     const [Search_Status, setSearch_Status] = useState("all");
 
 
-    const Filtered_Projects = USER_PROJECTS.filter((p) => p.Title.toLocaleLowerCase().includes(Search.toLocaleLowerCase().trim())).filter((p) => Search_Status == "all" ? p : p.status == Search_Status);
-    console.log("FP", Filtered_Projects);
-    const add_Project = (e) => {
-        const data = { Title: Title, Description: Description, status: Status, date: Due_Date, user_id: CURRENT_USER[0].id, id: Date.now() };
-        dispatch(addProjectDb(data))
-    }
+        const Filtered_Projects = C_USER_PROJECTS
+        .filter((p) => p.Title.toLocaleLowerCase().includes(Search.toLocaleLowerCase().trim()))
+        .filter((p) => Search_Status === "all" ? true : p.status === Search_Status);
+        console.log("FP", Filtered_Projects);
+    
+        const add_Project = (e) => {
+        e.preventDefault();
+        const data = {
+            Title,
+            Description,
+            status: Status,
+            date: Due_Date,
+            user_id: CURRENTUSER_ID,
+            startDate: new Date().toISOString().substring(0, 10)
+        };
+        dispatch(addProjectDb(data));
+    };
+
 
 
     const [EditId, setEditId] = useState(0);
@@ -75,14 +101,15 @@ function Projects() {
     }
 
     return (
-        <>  <h1>WELCOME {CURRENT_USER[0].id}</h1>{deleteId && createPortal(<div className="modal-overlay">
+        <>  <h1>WELCOME {CURRENT_USER[0].id}</h1>
+        {deleteId && createPortal(<div className="modal-overlay">
             <div className="modal-form">
                 <h1> Are You Sure?</h1>
                 <p> You want to Delete This Project?</p>
                 <div style={{ display: "flex", justifyContent: "center", gap: '20px', margin: '10px 0px' }}>
                     <button style={{ background: 'red', color: 'white' }} onClick={() => {
                         dispatch(deleteProjectDb(deleteId));
-                        setDeleteId(null);
+                        setdeleteId(null);
                     }}>Yes</button>
                     <button onClick={() => setdeleteId(0)} style={{ border: '1px solid var(--accent-amber)' }}> Not Sure </button>
                 </div>

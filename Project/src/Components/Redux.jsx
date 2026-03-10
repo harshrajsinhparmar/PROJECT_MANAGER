@@ -15,12 +15,12 @@ export const addProjectDb = createAsyncThunk("projects/add", async (projectData)
 });
 
 export const editProjectDb = createAsyncThunk("projects/edit", async ({ id, updatedData }) => {
-    const res = await axios.put(`http://localhost:5000/api/projects/${id}`, updatedData);
+    const res = await axios.put(`${API_URL}/${id}`, updatedData);
     return res.data;
 });
 
 export const deleteProjectDb = createAsyncThunk("projects/delete", async (id) => {
-    await axios.delete(`http://localhost:5000/api/projects/${id}`);
+    await axios.delete(`${API_URL}/${id}`);
     return id; // Return the ID so we can remove it from state
 });
 

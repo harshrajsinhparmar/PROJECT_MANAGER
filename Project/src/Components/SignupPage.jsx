@@ -8,26 +8,29 @@ function SignupPage() {
     const [Email, setEmail] = useState();
     const [Password, setPassword] = useState();
     const navigate = useNavigate();
-    const [user, setuser] = useState(JSON.parse(localStorage.getItem('users')) || []);
-    const Exist = useSelector((state) => state.registration.users).filter(p => p.email == Email).length;
-    console.log(useSelector((state) => state.registration.users).filter(p => p.email == Email).length != 0);
+    const [users, setUsers] = useState(JSON.parse(localStorage.getItem('users')) || []);
 
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        if (Exist != 0) {
+        const existingUsers = JSON.parse(localStorage.getItem('users')) || [];
+        const alreadyExists = existingUsers.some(u => u.email === Email);
+
+        if (alreadyExists) {
             alert("EMAIL ALRERADY EXIST");
             return
         }
-        else {
-            localStorage.setItem("users", JSON.stringify([...user, { email: Email, password: Password, id: Date.now() }]));
-            console.log("CURRENT", user);
-            alert("USER SAVED");
-            navigate("/login");
-        }
-    }
+        const newUser = { email: Email, password: Password, id: Date.now() };
+        const updatedUsers = [...existingUsers, newUser];
+        localStorage.setItem("users", JSON.stringify(updatedUsers));
+        setUsers(updatedUsers);
+        alert("USER SAVED");
+        navigate("/login");
+        };
+    
 
-    return (<div style={{ padding: '10px' }}>
+    return (
+    <div style={{ padding: '10px' }}>
         <div className="signup_form" >
             <h1>Signup Page</h1>
             <form onSubmit={handleSubmit}>
@@ -44,4 +47,4 @@ function SignupPage() {
     )
 }
 
-export default SignupPage
+export default SignupPage;

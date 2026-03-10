@@ -37,6 +37,18 @@ app.post('/api/projects', async (req, res) => {
     } catch (err) { res.status(500).json(err); }
 });
 
+app.put('/api/projects/:id', async (req, res) => {
+    try {
+        const updated = await Project.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            { new: true } // return the updated document
+        );
+        res.json(updated);
+    } catch (err) { res.status(500).json(err); }
+});
+
+
 // 3. DELETE a project
 app.delete('/api/projects/:id', async (req, res) => {
     try {

@@ -1,5 +1,6 @@
     import React from "react";
     import { Navigate, Outlet, useParams } from "react-router-dom";
+import { useSelector } from "react-redux";
 
     const LoginGuard = () => {
         return localStorage.getItem("CURRENTUSER") ? <Outlet /> : <Navigate to="/login" />;
@@ -11,17 +12,18 @@
 
     const ProjectGuard = () => {
         const P_id = useParams();
-        const PROJECT_W_ID = JSON.parse(localStorage.getItem("Projects")).filter((p) => p.id == P_id.id.replace(':', ""));
+        const allProjects = useSelector((state) => state.registration.Projects);
         const CURRENTUSER_ID = JSON.parse(localStorage.getItem("CURRENTUSER")).map((u) => u.id);
         //current user ni id project id che teena thi match thavi joye
-        if (PROJECT_W_ID.length != 0) {
-            return CURRENTUSER_ID == PROJECT_W_ID[0].user_id ? <Outlet /> : <><h1>Look at you own project</h1></>;
-        }
-        else {
+         const matchedProject = allProjects.find((p) => p._id === id);
 
-            return <h1> INVALID URL</h1>
+    if (!matchedProject) {
+        return <h1>INVALID URL</h1>;
+    }
 
-        }
+    return String(matchedProject.user_id) === String(CURRENTUSER_ID)
+        ? <Outlet />
+        : <h1>Look at your own project</h1>;
     }
 
 
