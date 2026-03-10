@@ -44,6 +44,7 @@ function Projects() {
         const Filtered_Projects = C_USER_PROJECTS
         .filter((p) => p.Title.toLocaleLowerCase().includes(Search.toLocaleLowerCase().trim()))
         .filter((p) => Search_Status === "all" ? true : p.status === Search_Status);
+     
         console.log("FP", Filtered_Projects);
     
         const add_Project = (e) => {
@@ -73,7 +74,7 @@ function Projects() {
         setEditDate(p.date);
         setEditDesc(p.Description);
         setEditStatus(p.status);
-        setEditId(p.id);
+        setEditId(p._id);
         setEditTitle(p.Title);
 
     }
@@ -83,13 +84,15 @@ function Projects() {
         console.log("EDIT _PROJECT TEST");
         dispatch(editProjectDb({
             id: EditId,
-            Title: Title_2,
-            Description: Description_2,
-            status: Status_2,
-            date: Due_Date_2,
-            user_id: CURRENT_USER[0]._id,
+           updatedData: {
+                Title: Title_2,
+                Description: Description_2,
+                status: Status_2,
+                date: Due_Date_2,
+                user_id: CURRENTUSER_ID,
+            }
         }));
-        setEditId(0);
+        setEditId(null);
     }
 
     const [deleteId, setdeleteId] = useState(0);
