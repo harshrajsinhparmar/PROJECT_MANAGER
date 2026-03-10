@@ -1,0 +1,96 @@
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  --bg-dark: #101820;
+  --accent-amber: #f2aa4d;
+  --card-bg: #1c252e;
+  --text-white: #ffffff;
+  --text-gray: #a0aec0;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  margin: 0;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  /* Smooth transition */
+}
+
+.dark {
+  --bg-main: #101820;
+  --card-bg: #1c252e;
+  --text-primary: #ffffff;
+  --input-bg: #2d3748;
+  --input-border: #4a5568;
+}
+
+/* Light Theme Variables */
+.light {
+  --bg-main: #f7f9fc;
+  --card-bg: #ffffff;
+  --text-primary: #1a202c;
+  --input-bg: #edf2f7;
+  --input-border: #cbd5e0;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+
+a:hover {
+  color: #535bf2;
+}
+
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  background-color: var(--accent-amber);
+  color: #101820;
+  /* Keep button text dark for contrast */
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+input,
+textarea,
+select {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--text-primary);
+  padding: 8px;
+  border-radius: 4px;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+
+  a:hover {
+    color: #747bff;
+  }
+
+  button {
+    background-color: #f9f9f9;
+  }
+}

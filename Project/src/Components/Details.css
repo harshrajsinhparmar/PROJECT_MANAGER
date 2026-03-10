@@ -1,0 +1,51 @@
+.details-wrapper {
+    max-width: 700px;
+    margin: 50px auto;
+    padding: 20px;
+}
+
+.back-link {
+    background: none;
+    color: #f2aa4d;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-bottom: 20px;
+}
+
+.details-card {
+    background-color: #1c252e;
+    padding: 40px;
+    border-radius: 10px;
+    border: 1px solid #334155;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+}
+
+h2 {
+    color: #f2aa4d;
+
+}
+
+
+
+.status-badge {
+    padding: 5px 12px;
+    text-transform: uppercase;
+    font-weight: bold;
+    background: #2d3748;
+}
+
+/* Status Colors */
+.active {
+    color: cyan;
+    border: 1px solid cyan;
+}
+
+.completed {
+    color: lime;
+    border: 1px solid lime;
+}
+
+.hold {
+    color: orange;
+    border: 1px solid orange;
+}
