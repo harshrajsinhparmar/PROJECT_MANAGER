@@ -1,14 +1,15 @@
 import React, { useState } from "react"
 import "./LoginPage.css"
-import { Link, useNavigate, useParams } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { loginUser } from "./Redux";
 import { useDispatch } from "react-redux";
+
 function LoginPage() {
     const dispatch = useDispatch();
     const [Email, setEmail] = useState();
     const [Password, setPassword] = useState();
     const navigate = useNavigate();
-    const [user, setuser] = useState(JSON.parse(localStorage.getItem('users')) || []);
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();

@@ -4,14 +4,16 @@ import axios from "axios";
 const USERS_URL = "http://localhost:5000/api/users";
 const API_URL = "http://localhost:5000/api/projects";
 
+// ─────────────────────────────────────────
+// USER THUNKS
+// ─────────────────────────────────────────
 
-// --- USER THUNKS ---
 export const signupUser = createAsyncThunk("users/signup", async (userData, { rejectWithValue }) => {
     try {
         const res = await axios.post(`${USERS_URL}/signup`, userData);
         return res.data;
     } catch (err) {
-        const message = err.response?.data?.message || err.message || "Signup failed";  // ✅
+        const message = err.response?.data?.message || err.message || "Signup failed";
         return rejectWithValue(message);
     }
 });
@@ -21,7 +23,7 @@ export const loginUser = createAsyncThunk("users/login", async (credentials, { r
         const res = await axios.post(`${USERS_URL}/login`, credentials);
         return res.data;
     } catch (err) {
-        const message = err.response?.data?.message || err.message || "Login failed";  // ✅
+        const message = err.response?.data?.message || err.message || "Login failed";
         return rejectWithValue(message);
     }
 });
@@ -46,7 +48,6 @@ export const deleteProfile = createAsyncThunk("users/delete", async (id, { rejec
     }
 });
 
-
 export const fetchNotifications = createAsyncThunk("users/fetchNotifications", async (userId) => {
     const res = await axios.get(`${USERS_URL}/${userId}/notifications`);
     return res.data;
@@ -57,8 +58,11 @@ export const markNotificationsRead = createAsyncThunk("users/markNotificationsRe
     return true;
 });
 
-// --- PROJECT THUNKS ---
-// Update fetchUserProjects to fetch both created and assigned
+// ─────────────────────────────────────────
+// PROJECT THUNKS
+// ─────────────────────────────────────────
+
+// Fetch projects I created
 export const fetchCreatedProjects = createAsyncThunk("projects/fetchCreated", async (userId, { rejectWithValue }) => {
     try {
         const res = await axios.get(`${API_URL}/created/${userId}`);
@@ -69,6 +73,7 @@ export const fetchCreatedProjects = createAsyncThunk("projects/fetchCreated", as
     }
 });
 
+// Fetch projects assigned to me
 export const fetchAssignedProjects = createAsyncThunk("projects/fetchAssigned", async (userId, { rejectWithValue }) => {
     try {
         const res = await axios.get(`${API_URL}/assigned/${userId}`);
@@ -78,8 +83,6 @@ export const fetchAssignedProjects = createAsyncThunk("projects/fetchAssigned", 
         return rejectWithValue(message);
     }
 });
-
-
 
 export const addProjectDb = createAsyncThunk("projects/add", async (projectData, { rejectWithValue }) => {
     try {
@@ -121,6 +124,10 @@ export const assignProjectDb = createAsyncThunk("projects/assign", async ({ proj
     }
 });
 
+// ─────────────────────────────────────────
+// SLICE
+// ─────────────────────────────────────────
+
 const FORMSLICE = createSlice({
     name: 'registration',
     initialState: {
@@ -136,18 +143,18 @@ const FORMSLICE = createSlice({
         toggleTheme: (state) => {
             state.mode = state.mode === "dark" ? "light" : "dark";
             localStorage.setItem("theme", state.mode);
-        }, logoutUser: (state) => {
+        },
+        logoutUser: (state) => {
             state.currentUser = null;
             state.createdProjects = [];
             state.assignedProjects = [];
             state.notifications = [];
             localStorage.removeItem("CURRENTUSER");
         }
-
     },
     extraReducers: (builder) => {
         builder
-            // User cases
+            // ── User ──
             .addCase(loginUser.fulfilled, (state, action) => {
                 state.currentUser = action.payload;
                 localStorage.setItem("CURRENTUSER", JSON.stringify([action.payload]));
@@ -172,7 +179,8 @@ const FORMSLICE = createSlice({
             .addCase(markNotificationsRead.fulfilled, (state) => {
                 state.notifications = state.notifications.map(n => ({ ...n, read: true }));
             })
-            // Project cases
+
+            // ── Projects ──
             .addCase(fetchCreatedProjects.fulfilled, (state, action) => {
                 state.createdProjects = action.payload;
             })
@@ -192,7 +200,7 @@ const FORMSLICE = createSlice({
                 if (assignedIndex !== -1) state.assignedProjects[assignedIndex] = action.payload;
             })
             .addCase(deleteProjectDb.fulfilled, (state, action) => {
-                state.Projects = state.Projects.filter(p => p._id !== action.payload);
+                state.createdProjects = state.createdProjects.filter(p => p._id !== action.payload);
             })
             .addCase(assignProjectDb.fulfilled, (state, action) => {
                 const index = state.createdProjects.findIndex(p => p._id === action.payload._id);

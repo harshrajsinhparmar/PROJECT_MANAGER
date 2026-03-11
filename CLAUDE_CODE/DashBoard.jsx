@@ -1,9 +1,10 @@
 import React, { useEffect } from "react"
-import { useDispatch, useSelector } from "react-redux"
+import { useSelector, useDispatch } from "react-redux"
 import { useNavigate } from "react-router-dom";
+import { fetchCreatedProjects, fetchAssignedProjects } from "./Redux";
 import "./DashBoard.css"
 import GanttView from "./GanttView";
-import { fetchCreatedProjects, fetchAssignedProjects } from "./Redux";
+
 const STATUS_COLORS = {
     backlog: 'gray',
     todo: '#4a9eff',
@@ -13,10 +14,11 @@ const STATUS_COLORS = {
     done: 'teal',
     complete: 'lime'
 };
+
 function DashBoard() {
+    const dispatch = useDispatch();
     const navigate = useNavigate();
     const CURRENTUSER_ID = JSON.parse(localStorage.getItem("CURRENTUSER"))[0]._id;
-    const dispatch = useDispatch();
 
     useEffect(() => {
         dispatch(fetchCreatedProjects(CURRENTUSER_ID));
@@ -39,6 +41,7 @@ function DashBoard() {
     const inReview = createdProjects.filter(p => p.status === 'inreview').length;
 
     const pct = (count) => total ? `${Math.round((count / total) * 100)}%` : '0%';
+
     return (
         <div className="dashboard-wrapper">
             <div>
@@ -90,4 +93,4 @@ function DashBoard() {
     );
 }
 
-export default DashBoard
+export default DashBoard;

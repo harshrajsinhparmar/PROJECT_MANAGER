@@ -1,7 +1,7 @@
 import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import "./Details.css";
 import { useSelector } from "react-redux";
+import "./Details.css";
 
 const STATUS_COLORS = {
     backlog: 'gray',
@@ -23,13 +23,12 @@ function Details() {
     const { id } = useParams();
     const navigate = useNavigate();
 
-    // Clean the ID and find the project
     const createdProjects = useSelector((state) => state.registration.createdProjects);
     const assignedProjects = useSelector((state) => state.registration.assignedProjects);
     const allProjects = [...createdProjects, ...assignedProjects];
 
     const project = allProjects.find((p) => p._id === id);
-    // Safety Check: If project doesn't exist
+
     if (!project) {
         return (
             <div className="details-container">
@@ -46,6 +45,8 @@ function Details() {
             </button>
 
             <div className="details-card">
+
+                {/* Status + Priority badges */}
                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '16px' }}>
                     <span style={{
                         background: STATUS_COLORS[project.status] || 'gray',

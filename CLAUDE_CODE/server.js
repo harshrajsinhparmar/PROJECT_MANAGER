@@ -9,18 +9,18 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// DELETE the cached model before re-registering
-mongoose.deleteModel(/.*Project.*/);
 const Project = require('./models/Projects.js');
 const User = require('./models/User.js');
-// Connection
+
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("✅ DB Connected"))
     .catch(err => console.error("❌ DB Error:", err));
 
-// --- USER ROUTES ---
+// ─────────────────────────────────────────
+// USER ROUTES
+// ─────────────────────────────────────────
 
-// SIGNUP - create new user
+// SIGNUP
 app.post('/api/users/signup', async (req, res) => {
     try {
         const { email, password, role } = req.body;
@@ -30,26 +30,27 @@ app.post('/api/users/signup', async (req, res) => {
         const saved = await newUser.save();
         res.status(201).json(saved);
     } catch (err) {
-        console.error("SIGNUP ERROR:", err.message);  // ADD THIS
+        console.error("SIGNUP ERROR:", err.message);
         res.status(500).json({ message: err.message });
     }
 });
 
-// LOGIN - find user by email+password
+// LOGIN
 app.post('/api/users/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-        const user = await User.findOne({ email });
+        const user = await Use
+        r.findOne({ email });
         if (!user) return res.status(404).json({ message: "Email not found" });
         if (user.password !== password) return res.status(401).json({ message: "Wrong password" });
         res.json(user);
     } catch (err) {
-        console.error("LOGIN ERROR:", err.message);   // ADD THIS
+        console.error("LOGIN ERROR:", err.message);
         res.status(500).json({ message: err.message });
     }
 });
 
-// UPDATE profile
+// UPDATE PROFILE
 app.put('/api/users/:id', async (req, res) => {
     try {
         const updated = await User.findByIdAndUpdate(
@@ -58,10 +59,13 @@ app.put('/api/users/:id', async (req, res) => {
             { returnDocument: 'after' }
         );
         res.json(updated);
-    } catch (err) { res.status(500).json(err); }
+    } catch (err) {
+        console.error("UPDATE PROFILE ERROR:", err.message);
+        res.status(500).json({ message: err.message });
+    }
 });
 
-// DELETE profile
+// DELETE PROFILE — also deletes all projects created by this user
 app.delete('/api/users/:id', async (req, res) => {
     try {
         await User.findByIdAndDelete(req.params.id);
@@ -73,6 +77,7 @@ app.delete('/api/users/:id', async (req, res) => {
     }
 });
 
+// GET ALL USERS — returns only id, email, role (for assignment feature)
 app.get('/api/users', async (req, res) => {
     try {
         const users = await User.find({}, '_id email role');
@@ -83,6 +88,7 @@ app.get('/api/users', async (req, res) => {
     }
 });
 
+// SEARCH USER BY EMAIL (for assignment dropdown)
 app.get('/api/users/search/:email', async (req, res) => {
     try {
         const users = await User.find(
@@ -107,40 +113,47 @@ app.get('/api/users/:id/notifications', async (req, res) => {
     }
 });
 
-// GET NOTIFICATIONS for a user
-app.get('/api/users/:id/notifications', async (req, res) => {
+// MARK ALL NOTIFICATIONS AS READ
+app.put('/api/users/:id/notifications/read', async (req, res) => {
     try {
-        const user = await User.findById(req.params.id, 'notifications');
-        res.json(user.notifications);
+        await User.updateOne(
+            { _id: req.params.id },
+            { $set: { "notifications.$[].read": true } }
+        );
+        res.json({ message: "All notifications marked as read" });
     } catch (err) {
-        console.error("GET NOTIFICATIONS ERROR:", err.message);
+        console.error("MARK READ ERROR:", err.message);
         res.status(500).json({ message: err.message });
     }
 });
 
-// --- PROJECT ROUTES ---
+// ─────────────────────────────────────────
+// PROJECT ROUTES
+// ─────────────────────────────────────────
 
-// 1. GET all projects for a specific user
+// GET projects created by a user
 app.get('/api/projects/created/:userId', async (req, res) => {
     try {
         const projects = await Project.find({ createdBy: req.params.userId });
         res.json(projects);
     } catch (err) {
-        console.error("GET PROJECt ERROR:", err.message);   // ADD THIS
+        console.error("GET CREATED PROJECTS ERROR:", err.message);
         res.status(500).json({ message: err.message });
     }
 });
 
-
-// Get projects assigned to user
+// GET projects assigned to a user
 app.get('/api/projects/assigned/:userId', async (req, res) => {
     try {
         const projects = await Project.find({ assignedTo: req.params.userId });
         res.json(projects);
-    } catch (err) { res.status(500).json({ message: err.message }); }
+    } catch (err) {
+        console.error("GET ASSIGNED PROJECTS ERROR:", err.message);
+        res.status(500).json({ message: err.message });
+    }
 });
 
-// 2. ADD a new project
+// ADD a new project
 app.post('/api/projects', async (req, res) => {
     try {
         console.log("ADD PROJECT BODY:", req.body);
@@ -241,7 +254,6 @@ app.put('/api/projects/:id/assign', async (req, res) => {
                 }
             }
         );
-
         res.json(project);
     } catch (err) {
         console.error("ASSIGN PROJECT ERROR:", err.message);
