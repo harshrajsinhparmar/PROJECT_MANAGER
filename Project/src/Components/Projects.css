@@ -25,7 +25,7 @@ form {
     background-color: var(--card-bg);
     padding: 20px;
     border-radius: 8px;
-
+    height: 640px;
     border-left: 6px solid var(--accent-amber);
 }
 

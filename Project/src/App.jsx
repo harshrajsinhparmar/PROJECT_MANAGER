@@ -15,16 +15,16 @@ function App() {
   useEffect(() => {
     document.body.className = mode;
   }, [mode]);
-
+  const currentUser = JSON.parse(localStorage.getItem("CURRENTUSER"));
   useEffect(() => {
-    const currentUser = JSON.parse(localStorage.getItem("CURRENTUSER"));
+
     if (currentUser?.[0]?._id) {
       const userId = currentUser[0]._id;
       dispatch(fetchCreatedProjects(userId));
       dispatch(fetchAssignedProjects(userId));
       dispatch(fetchNotifications(userId));
     }
-  }, []);
+  }, [currentUser?._id]);
 
   return (<>
     <BrowserRouter>
@@ -39,6 +39,8 @@ function App() {
           <Route path="/dashboard" element={<DashBoard />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/profile" element={<EditProfile />} />
+
+
           <Route element={<ProjectGuard />} >
             <Route path="/projects/:id" element={<Details />} />
           </Route>

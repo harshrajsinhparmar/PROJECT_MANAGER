@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux";
-// NEW LINE
-import { addProjectDb, deleteProjectDb, editProjectDb, toggleTheme } from "./Redux";
+import KanbanBoard from "./KanbanBoard";
+import { addProjectDb, deleteProjectDb, editProjectDb, logoutUser, toggleTheme } from "./Redux";
 import { createPortal } from "react-dom";
 import './Projects.css'
 import { NavLink, useNavigate } from "react-router-dom";
@@ -37,6 +37,7 @@ function Projects() {
     const assignedProjects = useSelector((state) => state.registration.assignedProjects);
 
     const [activeTab, setActiveTab] = useState("mine");
+    const [viewMode, setViewMode] = useState("list");
 
     const [Title, setTitle] = useState("");
     const [Description, setDesc] = useState("");
@@ -119,10 +120,14 @@ function Projects() {
 
 
     const logout = () => {
-        localStorage.removeItem("CURRENTUSER")
-        window.location.reload();
+        console.log("logout 1")
+        dispatch(logoutUser());
+        navigate("/login");
     }
-
+    const handleKanbanEdit = (p) => {
+        startEditing(p);
+        setViewMode("list");
+    };
     return (
         <>  <h1>WELCOME {CURRENT_USER[0].email}
             <span style={{
@@ -159,8 +164,25 @@ function Projects() {
                         <button className="logout-btn" onClick={() => navigate("/dashboard")}>DASHBOARD</button >
                         <button className="logout-btn" onClick={() => navigate("/profile")}>Edit Profile</button>
                         <button className="logout-btn" onClick={logout}>LOGOUT</button>
-                        <button className="toggle-btn" onClick={() => dispatch(toggleTheme())} style={{ padding: '10px' }}>{useSelector((state) => state.registration.mode) === "dark" ? "Current: Dark Mode " : "Current:Light Mode"}</button>
+                        <button className="toggle-btn" onClick={() => dispatch(toggleTheme())} style={{ padding: '10px' }}>{themeMode === "dark" ? "Current: Dark Mode " : "Current:Light Mode"}</button>
+                        <button
+                            onClick={() => setActiveTab("mine")}
+                            style={{
+                                border: activeTab === "mine" ? '2px solid var(--accent-amber)' : '1px solid gray',
+                                padding: '8px 20px'
+                            }}>
+                            My Projects ({createdProjects.length})
+                        </button>
+
+                        <button
+                            onClick={() => setActiveTab("assigned")}
+                            style={{
+                                border: activeTab === "assigned" ? '2px solid var(--accent-amber)' : '1px solid gray',
+                            }}>
+                            Assigned to Me ({assignedProjects.length})
+                        </button>
                     </div>
+
                     {activeTab === "mine" && (
                         <div className="project-form" >
                             <form onSubmit={add_Project}>
@@ -199,29 +221,45 @@ function Projects() {
                 </div>
 
 
-                <div style={{ display: 'flex', gap: '10px', margin: '20px 0px 10px 0px' }}>
-                    <button
-                        onClick={() => setActiveTab("mine")}
-                        style={{
-                            border: activeTab === "mine" ? '2px solid var(--accent-amber)' : '1px solid gray',
-                            padding: '8px 20px'
-                        }}>
-                        My Projects ({createdProjects.length})
-                    </button>
-                    <button
-                        onClick={() => setActiveTab("assigned")}
-                        style={{
-                            border: activeTab === "assigned" ? '2px solid var(--accent-amber)' : '1px solid gray',
-                            padding: '8px 20px'
-                        }}>
-                        Assigned to Me ({assignedProjects.length})
-                    </button>
+                <div >
+
+
                 </div>
 
+                {/* 🆕 VIEW MODE TOGGLE */}
 
 
                 <div style={{ maxWidth: '800px' }}>
+
                     <div className="Search-Bar">
+                        <div style={{ display: 'flex', maxHeight: '38px' }}>
+                            <button
+                                onClick={() => setViewMode("list")}
+                                style={{
+                                    border: viewMode === "list" ? '2px solid var(--accent-amber)' : '1px solid gray',
+
+
+                                    background: viewMode === "list" ? 'var(--accent-amber)' : 'transparent',
+                                    color: viewMode === "list" ? 'black' : 'inherit',
+
+                                    cursor: 'pointer'
+                                }}>
+                                📋 List
+                            </button>
+                            <button
+                                onClick={() => setViewMode("kanban")}
+                                style={{
+                                    border: viewMode === "kanban" ? '2px solid var(--accent-amber)' : '1px solid gray',
+
+
+                                    background: viewMode === "kanban" ? 'var(--accent-amber)' : 'transparent',
+                                    color: viewMode === "kanban" ? 'black' : 'inherit',
+
+                                    cursor: 'pointer'
+                                }}>
+                                📊 Kanban
+                            </button>
+                        </div>
                         <input
                             style={{ width: '40%' }}
                             placeholder="Search title..."
@@ -240,127 +278,137 @@ function Projects() {
                             ))}
                         </select>
                     </div>
+                    {/* 🆕 CONDITIONAL VIEW RENDERING */}
+                    {viewMode === "kanban" ? (
+                        <KanbanBoard
+                            projects={Filtered_Projects}
+                            activeTab={activeTab}
+                            onEdit={handleKanbanEdit}
+                            onDelete={(id) => setdeleteId(id)}
+                        />
+                    ) : (
+                        <div className="user-projects">
+                            {Filtered_Projects.length === 0 && <div>No projects found</div>}
+                            <ol>
+                                {Filtered_Projects.map((p, i) =>
+                                    EditId != p._id ? (
+                                        <li key={p._id}>
+                                            <NavLink to={`/projects/${p._id}`}>
+                                                <strong>{p.Title}</strong>
+                                                <br />
+                                                {p.date}
+                                            </NavLink>
 
-                    <div className="user-projects">
-                        {Filtered_Projects.length === 0 && <div>No projects found</div>}
-                        <ol>
-                            {Filtered_Projects.map((p, i) =>
-                                EditId != p._id ? (
-                                    <li key={p._id}>
-                                        <NavLink to={`/projects/${p._id}`}>
-                                            <strong>{p.Title}</strong>
-                                            <br />
-                                            {p.date}
-                                        </NavLink>
-
-                                        {/* Status badge */}
-                                        <span style={{
-                                            background: STATUS_COLORS[p.status] || 'gray',
-                                            color: 'white',
-                                            padding: '2px 10px',
-                                            borderRadius: '12px',
-                                            fontSize: '12px',
-                                            marginLeft: '10px'
-                                        }}>
-                                            {p.status}
-                                        </span>
-
-                                        {/* Priority badge */}
-                                        <span style={{
-                                            background: PRIORITY_COLORS[p.priority] || 'gray',
-                                            color: 'white',
-                                            padding: '2px 10px',
-                                            borderRadius: '12px',
-                                            fontSize: '12px',
-                                            marginLeft: '6px'
-                                        }}>
-                                            {p.priority}
-                                        </span>
-
-                                        {/* Sprint badge */}
-                                        <span style={{
-                                            border: '1px solid var(--accent-amber)',
-                                            padding: '2px 8px',
-                                            borderRadius: '12px',
-                                            fontSize: '12px',
-                                            marginLeft: '6px'
-                                        }}>
-                                            Sprint {p.sprint}
-                                        </span>
-
-                                        {/* Tags */}
-                                        {p.tags && p.tags.map((tag, ti) => (
-                                            <span key={ti} style={{
-                                                background: '#4a5568',
+                                            {/* Status badge */}
+                                            <span style={{
+                                                background: STATUS_COLORS[p.status] || 'gray',
                                                 color: 'white',
+                                                padding: '2px 10px',
+                                                borderRadius: '12px',
+                                                fontSize: '12px',
+                                                marginLeft: '10px'
+                                            }}>
+                                                {p.status}
+                                            </span>
+
+                                            {/* Priority badge */}
+                                            <span style={{
+                                                background: PRIORITY_COLORS[p.priority] || 'gray',
+                                                color: 'white',
+                                                padding: '2px 10px',
+                                                borderRadius: '12px',
+                                                fontSize: '12px',
+                                                marginLeft: '6px'
+                                            }}>
+                                                {p.priority}
+                                            </span>
+
+                                            {/* Sprint badge */}
+                                            <span style={{
+                                                border: '1px solid var(--accent-amber)',
                                                 padding: '2px 8px',
                                                 borderRadius: '12px',
-                                                fontSize: '11px',
-                                                marginLeft: '4px'
+                                                fontSize: '12px',
+                                                marginLeft: '6px'
                                             }}>
-                                                #{tag}
+                                                Sprint {p.sprint}
                                             </span>
-                                        ))}
 
-                                        {/* Action buttons — only on "mine" tab */}
-                                        {activeTab === "mine" && (
-                                            <div style={{ display: "flex", gap: "10px", marginTop: '6px' }}>
-                                                <button style={{ border: '1px solid var(--accent-amber)' }} onClick={() => startEditing(p)}>Edit</button>
-                                                <button style={{ background: 'red', color: 'white' }} onClick={() => setdeleteId(p._id)}>Delete</button>
-                                            </div>
-                                        )}
+                                            {/* Tags */}
+                                            {p.tags && p.tags.map((tag, ti) => (
+                                                <span key={ti} style={{
+                                                    background: '#4a5568',
+                                                    color: 'white',
+                                                    padding: '2px 8px',
+                                                    borderRadius: '12px',
+                                                    fontSize: '11px',
+                                                    marginLeft: '4px'
+                                                }}>
+                                                    #{tag}
+                                                </span>
+                                            ))}
 
-                                        {/* Assigned tab shows who assigned it */}
-                                        {activeTab === "assigned" && (
-                                            <div style={{ fontSize: '12px', color: 'gray', marginTop: '4px' }}>
-                                                Assigned by: {p.createdBy}
-                                            </div>
-                                        )}
-                                    </li>
-                                )
-                                    : (<div key={p._id} className="edit-form">
-                                        <form>
-                                            <label>Title</label>
-                                            <input type="text" defaultValue={p.Title} onChange={(e) => setEditTitle(e.target.value)} required />
+                                            {/* Action buttons — only on "mine" tab */}
+                                            {activeTab === "mine" && (
+                                                <div style={{ display: "flex", gap: "10px", marginTop: '6px' }}>
+                                                    <button style={{ border: '1px solid var(--accent-amber)' }} onClick={() => startEditing(p)}>Edit</button>
+                                                    <button style={{ background: 'red', color: 'white' }} onClick={() => setdeleteId(p._id)}>Delete</button>
+                                                </div>
+                                            )}
 
-                                            <label>Description</label>
-                                            <textarea defaultValue={p.Description} onChange={(e) => setEditDesc(e.target.value)}></textarea>
-
-                                            <label>Status</label>
-                                            <select defaultValue={p.status} onChange={(e) => setEditStatus(e.target.value)}>
-                                                {STATUS_OPTIONS.map(s => (
-                                                    <option key={s} value={s}>{s}</option>
-                                                ))}
-                                            </select>
-
-                                            <label>Priority</label>
-                                            <select defaultValue={p.priority} onChange={(e) => setEditPriority(e.target.value)}>
-                                                {PRIORITY_OPTIONS.map(pr => (
-                                                    <option key={pr} value={pr}>{pr}</option>
-                                                ))}
-                                            </select>
-
-                                            <label>Tags (comma separated)</label>
-                                            <input type="text" defaultValue={p.tags ? p.tags.join(', ') : ''} onChange={(e) => setEditTags(e.target.value)} />
-
-                                            <label>Sprint</label>
-                                            <input type="number" min="1" defaultValue={p.sprint} onChange={(e) => setEditSprint(Number(e.target.value))} />
-
-                                            <label>Due Date</label>
-                                            <input type="date" defaultValue={p.date} onChange={(e) => setEditDate(e.target.value)} required />
-
-                                            <div style={{ display: "flex", justifyContent: "center", gap: '20px', margin: '10px 0px' }}>
-                                                <button style={{ background: 'lime', color: 'white' }} type="submit" onClick={edit_Project}>SAVE</button>
-                                                <button style={{ border: '1px solid var(--accent-amber)' }} onClick={() => setEditId(null)}>Cancel</button>
-                                            </div>
-                                        </form>
-                                    </div>
+                                            {/* Assigned tab shows who assigned it */}
+                                            {activeTab === "assigned" && (
+                                                <div style={{ fontSize: '12px', color: 'gray', marginTop: '4px' }}>
+                                                    Assigned by: {p.createdBy}
+                                                </div>
+                                            )}
+                                        </li>
                                     )
-                            )}
-                        </ol>
-                    </div>
+                                        : (<div key={p._id} className="edit-form">
+                                            <form>
+                                                <label>Title</label>
+                                                <input type="text" defaultValue={Title_2} onChange={(e) => setEditTitle(e.target.value)} required />
+
+                                                <label>Description</label>
+                                                <textarea defaultValue={p.Description} onChange={(e) => setEditDesc(e.target.value)}></textarea>
+
+                                                <label>Status</label>
+                                                <select defaultValue={p.status} onChange={(e) => setEditStatus(e.target.value)}>
+                                                    {STATUS_OPTIONS.map(s => (
+                                                        <option key={s} value={s}>{s}</option>
+                                                    ))}
+                                                </select>
+
+                                                <label>Priority</label>
+                                                <select defaultValue={p.priority} onChange={(e) => setEditPriority(e.target.value)}>
+                                                    {PRIORITY_OPTIONS.map(pr => (
+                                                        <option key={pr} value={pr}>{pr}</option>
+                                                    ))}
+                                                </select>
+
+                                                <label>Tags (comma separated)</label>
+                                                <input type="text" defaultValue={p.tags ? p.tags.join(', ') : ''} onChange={(e) => setEditTags(e.target.value)} />
+
+                                                <label>Sprint</label>
+                                                <input type="number" min="1" defaultValue={p.sprint} onChange={(e) => setEditSprint(Number(e.target.value))} />
+
+                                                <label>Due Date</label>
+                                                <input type="date" defaultValue={p.date} onChange={(e) => setEditDate(e.target.value)} required />
+
+                                                <div style={{ display: "flex", justifyContent: "center", gap: '20px', margin: '10px 0px' }}>
+                                                    <button style={{ background: 'lime', color: 'white' }} type="submit" onClick={edit_Project}>SAVE</button>
+                                                    <button style={{ border: '1px solid var(--accent-amber)' }} onClick={() => setEditId(null)}>Cancel</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                        )
+                                )}
+                            </ol>
+
+                        </div>
+                    )}
                 </div>
-            </div>
+            </div >
         </>
     );
 }
