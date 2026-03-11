@@ -1,34 +1,25 @@
 import React, { useState } from "react"
 import "./LoginPage.css"
 import { Link, useNavigate, useParams } from "react-router-dom"
+import { loginUser } from "./Redux";
+import { useDispatch } from "react-redux";
 function LoginPage() {
-
+    const dispatch = useDispatch();
     const [Email, setEmail] = useState();
     const [Password, setPassword] = useState();
     const navigate = useNavigate();
     const [user, setuser] = useState(JSON.parse(localStorage.getItem('users')) || []);
 
-    function handleSubmit(e) {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        const USER = JSON.parse(localStorage.getItem("users")).filter((u) => u.email == Email);
-
-        console.log(USER)
-        if (USER.length != 0) {
-            if (USER.filter((u) => u.password == Password).length != 0) {
-                localStorage.setItem("CURRENTUSER", JSON.stringify([...USER]));
-                alert("LOGGING IN");
-                navigate("/projects");
-            }
-            else {
-                alert("Wrong Password");
-            }
+        const result = await dispatch(loginUser({ email: Email, password: Password }));
+        if (loginUser.fulfilled.match(result)) {
+            navigate("/projects");
+        } else {
+            alert(result.payload);
+            console.log(result.payload); // "Email not found" or "Wrong password"
         }
-        else {
-            alert("Wrong Email");
-        }
-        //const CURRENT_USER = JSON.parse(localStorage.getItem("CURRENTUSER"));
-
-    }
+    };
 
     return (<div style={{ padding: '10px' }}>
         <div className="login_page">

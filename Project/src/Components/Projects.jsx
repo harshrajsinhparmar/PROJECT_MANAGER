@@ -1,53 +1,43 @@
-import React, { useEffect,useState } from "react"
+import React, { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux";
 // NEW LINE
-import { addProjectDb, deleteProjectDb, editProjectDb, toggleTheme, fetchProjects } from "./Redux";
+import { addProjectDb, deleteProjectDb, editProjectDb, toggleTheme, fetchUserProjects } from "./Redux";
 import { createPortal } from "react-dom";
 import './Projects.css'
 import { Navigate, NavLink, useNavigate } from "react-router-dom";
 function Projects() {
-
+    const dispatch = useDispatch();
     const navigate = useNavigate();
-    
+
 
     const [Title, setTitle] = useState();
     const [Description, setDesc] = useState()
     const [Status, setStatus] = useState("active")
     const [Due_Date, setDate] = useState()
 
-    const CURRENTUSER_ID = JSON.parse(localStorage.getItem("CURRENTUSER"))[0].id;
+    const CURRENTUSER_ID = JSON.parse(localStorage.getItem("CURRENTUSER"))[0]._id;
 
     useEffect(() => {
-        dispatch(fetchProjects(CURRENTUSER_ID));
+        dispatch(fetchUserProjects(CURRENTUSER_ID));
     }, []);
-
-
 
     const C_USER_PROJECTS = useSelector((state) =>
         state.registration.Projects.filter((p) => p.user_id == CURRENTUSER_ID)
     );
 
-
-
-
-
     const CURRENT_USER = JSON.parse(localStorage.getItem("CURRENTUSER"));
     // console.log("CU", CURRENT_USER);
-    const USER_PROJECTS = localStorage.getItem("Projects") == null ? [] : JSON.parse(localStorage.getItem("Projects")).filter((p) => p.user_id == CURRENT_USER[0].id);
-    // console.log("UP", USER_PROJECTS);
-    const dispatch = useDispatch();
 
     const [Search, setSearch] = useState("");
     const [Search_Status, setSearch_Status] = useState("all");
 
-
-        const Filtered_Projects = C_USER_PROJECTS
+    const Filtered_Projects = C_USER_PROJECTS
         .filter((p) => p.Title.toLocaleLowerCase().includes(Search.toLocaleLowerCase().trim()))
         .filter((p) => Search_Status === "all" ? true : p.status === Search_Status);
-     
-        console.log("FP", Filtered_Projects);
-    
-        const add_Project = (e) => {
+
+    console.log("FP", Filtered_Projects);
+
+    const add_Project = (e) => {
         e.preventDefault();
         const data = {
             Title,
@@ -64,7 +54,7 @@ function Projects() {
 
     const [EditId, setEditId] = useState(0);
     // console.log("EID", EditId, "");
-    console.log("CURRENT USER PROJECTS", C_USER_PROJECTS.filter((p) => p.id == EditId));
+    console.log("CURRENT USER PROJECTS", C_USER_PROJECTS.filter((p) => p._id == EditId));
     const [Title_2, setEditTitle] = useState();
     const [Description_2, setEditDesc] = useState()
     const [Status_2, setEditStatus] = useState()
@@ -84,7 +74,7 @@ function Projects() {
         console.log("EDIT _PROJECT TEST");
         dispatch(editProjectDb({
             id: EditId,
-           updatedData: {
+            updatedData: {
                 Title: Title_2,
                 Description: Description_2,
                 status: Status_2,
@@ -104,23 +94,23 @@ function Projects() {
     }
 
     return (
-        <>  <h1>WELCOME {CURRENT_USER[0].id}</h1>
-        {deleteId && createPortal(<div className="modal-overlay">
-            <div className="modal-form">
-                <h1> Are You Sure?</h1>
-                <p> You want to Delete This Project?</p>
-                <div style={{ display: "flex", justifyContent: "center", gap: '20px', margin: '10px 0px' }}>
-                    <button style={{ background: 'red', color: 'white' }} onClick={() => {
-                        dispatch(deleteProjectDb(deleteId));
-                        setdeleteId(null);
-                    }}>Yes</button>
-                    <button onClick={() => setdeleteId(0)} style={{ border: '1px solid var(--accent-amber)' }}> Not Sure </button>
+        <>  <h1>WELCOME {CURRENT_USER[0]._id}</h1>
+            {deleteId && createPortal(<div className="modal-overlay">
+                <div className="modal-form">
+                    <h1> Are You Sure?</h1>
+                    <p> You want to Delete This Project?</p>
+                    <div style={{ display: "flex", justifyContent: "center", gap: '20px', margin: '10px 0px' }}>
+                        <button style={{ background: 'red', color: 'white' }} onClick={() => {
+                            dispatch(deleteProjectDb(deleteId));
+                            setdeleteId(null);
+                        }}>Yes</button>
+                        <button onClick={() => setdeleteId(0)} style={{ border: '1px solid var(--accent-amber)' }}> Not Sure </button>
+                    </div>
                 </div>
-            </div>
 
-        </div>
-            , document.getElementById("modal-root"))
-        }
+            </div>
+                , document.getElementById("modal-root"))
+            }
             <div className="PROJECTS">
                 <div style={{ display: 'flex ', gap: '20px', maxHeight: '380px' }}>
                     <div className="projects-btns" >
@@ -166,13 +156,13 @@ function Projects() {
                                 {Filtered_Projects.length == 0 && (<div>No projects found</div>)}
                                 {
                                     Filtered_Projects.map(
-                                        (p, i) => EditId != p.id ?
+                                        (p, i) => EditId != p._id ?
                                             <li key={i}  >
-                                                <NavLink to={`/projects/:${p.id}`} >{p.Title}<br />{p.date}-{p.status}</NavLink>
+                                                <NavLink to={`/projects/:${p._id}`} >{p.Title}<br />{p.date}-{p.status}</NavLink>
                                                 <div style={{ display: "flex", gap: "10px" }}>
 
                                                     <button style={{ border: '1px solid var(--accent-amber)' }} onClick={() => startEditing(p)}>Edit</button>
-                                                    <button style={{ background: 'red', color: 'white' }} onClick={() => setdeleteId(p.id)}>Delete</button>
+                                                    <button style={{ background: 'red', color: 'white' }} onClick={() => setdeleteId(p._id)}>Delete</button>
                                                 </div>
                                             </li>
 

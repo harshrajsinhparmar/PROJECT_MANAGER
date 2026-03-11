@@ -7,12 +7,21 @@ import Projects from "./Components/Projects"
 import Details from "./Components/Details"
 import { GuestGuard, LoginGuard, ProjectGuard } from "./Components/Guards"
 import EditProfile from "./Components/EditProfile";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchUserProjects } from "./Components/Redux"
 function App() {
+  const dispatch = useDispatch();
   const mode = useSelector((state) => state.registration.mode);
   useEffect(() => {
     document.body.className = mode;
   }, [mode]);
+
+  useEffect(() => {
+    const currentUser = JSON.parse(localStorage.getItem("CURRENTUSER"));
+    if (currentUser?.[0]?._id) {
+      dispatch(fetchUserProjects(currentUser[0]._id));
+    }
+  }, []);
   return (<>
     <BrowserRouter>
       <Routes>
