@@ -1,15 +1,28 @@
 import React from "react";
 import { useSelector } from "react-redux";
 import "./GanttView.css";
+
+const STATUS_COLORS = {
+    backlog: 'gray',
+    todo: '#4a9eff',
+    inprogress: '#f2aa4d',
+    inreview: '#a855f7',
+    onhold: 'orange',
+    done: 'teal',
+    complete: 'lime'
+};
+
+
+
 function GanttView() {
 
-
-    const CURRENTUSER_ID = JSON.parse(localStorage.getItem("CURRENTUSER"))[0]._id;
-    const AllPriojects = useSelector((state) => state.registration.Projects);
-    const User_Projects = AllPriojects.filter((p) => p.user_id == CURRENTUSER_ID);
-
-    console.log("USER_PROJECTS", User_Projects);
-
+    const createdProjects = useSelector((state) => state.registration.createdProjects);
+    const assignedProjects = useSelector((state) => state.registration.assignedProjects);
+    // Show all projects the user is involved in
+    const allProjects = [
+        ...createdProjects,
+        ...assignedProjects.filter(ap => !createdProjects.find(cp => cp._id === ap._id))
+    ];
     const current_Date = new Date();
     const daysInMonth = new Date(current_Date.getFullYear(), current_Date.getMonth() + 1, 0).getDate();
 
@@ -27,7 +40,7 @@ function GanttView() {
                         }
                     </div >
                     <div>
-                        {User_Projects.map((p) => {
+                        {allProjects.map((p) => {
                             const StartDate = new Date(p.startDate || p.createdAt);
                             const Due_Date = new Date(p.date);
 
@@ -57,12 +70,13 @@ function GanttView() {
 
                             const duration = Math.max(1, End - Start + 1);
                             return (
-                                <div key={p._id} className="gantt-row">
+                                < div key={p._id} className="gantt-row" >
                                     <div className="gantt-label">{p.Title}</div>
                                     <div className="gantt-bar-container">
                                         <div className={`gantt-bar ${p.status}`} style={{
                                             gridColumnStart: Start,
-                                            gridColumnEnd: `span ${duration}`
+                                            gridColumnEnd: `span ${duration}`,
+                                            background: STATUS_COLORS[p.status] || 'gray'
                                         }}> {p.status}
                                         </div>
                                     </div>
@@ -70,7 +84,7 @@ function GanttView() {
                         })}
                     </div>
                 </div>
-            </div>
+            </div >
         </>)
 }
 

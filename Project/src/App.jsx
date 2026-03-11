@@ -8,7 +8,7 @@ import Details from "./Components/Details"
 import { GuestGuard, LoginGuard, ProjectGuard } from "./Components/Guards"
 import EditProfile from "./Components/EditProfile";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchUserProjects } from "./Components/Redux"
+import { fetchAssignedProjects, fetchCreatedProjects, fetchNotifications } from "./Components/Redux"
 function App() {
   const dispatch = useDispatch();
   const mode = useSelector((state) => state.registration.mode);
@@ -19,9 +19,13 @@ function App() {
   useEffect(() => {
     const currentUser = JSON.parse(localStorage.getItem("CURRENTUSER"));
     if (currentUser?.[0]?._id) {
-      dispatch(fetchUserProjects(currentUser[0]._id));
+      const userId = currentUser[0]._id;
+      dispatch(fetchCreatedProjects(userId));
+      dispatch(fetchAssignedProjects(userId));
+      dispatch(fetchNotifications(userId));
     }
   }, []);
+
   return (<>
     <BrowserRouter>
       <Routes>

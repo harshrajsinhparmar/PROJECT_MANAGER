@@ -4,21 +4,21 @@ import { useSelector } from "react-redux";
 
 const LoginGuard = () => {
     return localStorage.getItem("CURRENTUSER") ? <Outlet /> : <Navigate to="/login" />;
-}
+};
 
 const GuestGuard = () => {
     return !localStorage.getItem("CURRENTUSER") ? <Outlet /> : <Navigate to="/projects" />;
-}
+};
 
 const ProjectGuard = () => {
     const { id } = useParams();
     const CURRENTUSER_ID = JSON.parse(localStorage.getItem("CURRENTUSER"))[0]._id;
 
+    // Check both created and assigned projects
     const createdProjects = useSelector((state) => state.registration.createdProjects);
     const assignedProjects = useSelector((state) => state.registration.assignedProjects);
     const allProjects = [...createdProjects, ...assignedProjects];
 
-    //current user ni id project id che teena thi match thavi joye
     const matchedProject = allProjects.find((p) => p._id === id);
 
     if (!matchedProject) {
@@ -31,6 +31,5 @@ const ProjectGuard = () => {
 
     return (isCreator || isAssignee) ? <Outlet /> : <h1>Look at your own project</h1>;
 };
-
 
 export { LoginGuard, ProjectGuard, GuestGuard };

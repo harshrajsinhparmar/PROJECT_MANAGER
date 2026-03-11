@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from "react"
+import React, { useState, useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux";
-// NEW LINE
-import { addProjectDb, deleteProjectDb, editProjectDb, toggleTheme } from "./Redux";
+import {
+    addProjectDb, deleteProjectDb, editProjectDb,
+    toggleTheme, fetchCreatedProjects, fetchAssignedProjects
+} from "./Redux";
 import { createPortal } from "react-dom";
 import './Projects.css'
 import { NavLink, useNavigate } from "react-router-dom";
@@ -25,19 +27,23 @@ const PRIORITY_COLORS = {
     high: 'red'
 };
 
-
 function Projects() {
-    const dispatch = useDispatch();
     const navigate = useNavigate();
-    const CURRENTUSER_ID = JSON.parse(localStorage.getItem("CURRENTUSER"))[0]._id;
+    const dispatch = useDispatch();
+
     const CURRENT_USER = JSON.parse(localStorage.getItem("CURRENTUSER"));
+    const CURRENTUSER_ID = CURRENT_USER[0]._id;
+
     const themeMode = useSelector((state) => state.registration.mode);
 
+    // Use createdProjects from Redux store
     const createdProjects = useSelector((state) => state.registration.createdProjects);
     const assignedProjects = useSelector((state) => state.registration.assignedProjects);
 
+    // Tab state: "mine" or "assigned"
     const [activeTab, setActiveTab] = useState("mine");
 
+    // Add project form state
     const [Title, setTitle] = useState("");
     const [Description, setDesc] = useState("");
     const [Status, setStatus] = useState("backlog");
@@ -46,10 +52,12 @@ function Projects() {
     const [Sprint, setSprint] = useState(1);
     const [Due_Date, setDate] = useState("");
 
+    // Search / filter state
     const [Search, setSearch] = useState("");
     const [Search_Status, setSearch_Status] = useState("all");
     const [Search_Priority, setSearch_Priority] = useState("all");
 
+    // The active project list based on tab
     const activeProjects = activeTab === "mine" ? createdProjects : assignedProjects;
 
     const Filtered_Projects = activeProjects
@@ -74,7 +82,6 @@ function Projects() {
         dispatch(addProjectDb(data));
     };
 
-
     // Edit state
     const [EditId, setEditId] = useState(null);
     const [Title_2, setEditTitle] = useState("");
@@ -94,8 +101,7 @@ function Projects() {
         setEditTags(p.tags ? p.tags.join(', ') : '');
         setEditSprint(p.sprint);
         setEditDate(p.date);
-
-    }
+    };
 
     const edit_Project = (e) => {
         e.preventDefault();
@@ -113,56 +119,65 @@ function Projects() {
             }
         }));
         setEditId(null);
-    }
+    };
 
-    const [deleteId, setdeleteId] = useState(0);
-
+    const [deleteId, setdeleteId] = useState(null);
 
     const logout = () => {
-        localStorage.removeItem("CURRENTUSER")
+        localStorage.removeItem("CURRENTUSER");
         window.location.reload();
-    }
+    };
 
     return (
-        <>  <h1>WELCOME {CURRENT_USER[0].email}
-            <span style={{
-                fontSize: '14px',
-                marginLeft: '10px',
-                padding: '3px 10px',
-                border: '1px solid var(--accent-amber)',
-                borderRadius: '20px'
-            }}>
-                {CURRENT_USER[0].role}
-            </span>
-        </h1 >
+        <>
+            <h1>WELCOME {CURRENT_USER[0].email}
+                <span style={{
+                    fontSize: '14px',
+                    marginLeft: '10px',
+                    padding: '3px 10px',
+                    border: '1px solid var(--accent-amber)',
+                    borderRadius: '20px'
+                }}>
+                    {CURRENT_USER[0].role}
+                </span>
+            </h1>
 
+            {/* Delete confirmation modal */}
             {deleteId && createPortal(
                 <div className="modal-overlay">
                     <div className="modal-form">
-                        <h1> Are You Sure?</h1>
-                        <p> You want to Delete This Project?</p>
+                        <h1>Are You Sure?</h1>
+                        <p>You want to delete this project?</p>
                         <div style={{ display: "flex", justifyContent: "center", gap: '20px', margin: '10px 0px' }}>
                             <button style={{ background: 'red', color: 'white' }} onClick={() => {
                                 dispatch(deleteProjectDb(deleteId));
                                 setdeleteId(null);
                             }}>Yes</button>
-                            <button onClick={() => setdeleteId(0)} style={{ border: '1px solid var(--accent-amber)' }}> Not Sure </button>
+                            <button onClick={() => setdeleteId(null)} style={{ border: '1px solid var(--accent-amber)' }}>
+                                Cancel
+                            </button>
                         </div>
                     </div>
-                </div>
-                , document.getElementById("modal-root"))
-            }
+                </div>,
+                document.getElementById("modal-root")
+            )}
 
             <div className="PROJECTS">
-                <div style={{ display: 'flex ', gap: '20px', maxHeight: '380px' }}>
-                    <div className="projects-btns" >
-                        <button className="logout-btn" onClick={() => navigate("/dashboard")}>DASHBOARD</button >
+                <div style={{ display: 'flex', gap: '20px', maxHeight: '420px' }}>
+
+                    {/* Sidebar buttons */}
+                    <div className="projects-btns">
+                        <button className="logout-btn" onClick={() => navigate("/dashboard")}>DASHBOARD</button>
                         <button className="logout-btn" onClick={() => navigate("/profile")}>Edit Profile</button>
                         <button className="logout-btn" onClick={logout}>LOGOUT</button>
-                        <button className="toggle-btn" onClick={() => dispatch(toggleTheme())} style={{ padding: '10px' }}>{useSelector((state) => state.registration.mode) === "dark" ? "Current: Dark Mode " : "Current:Light Mode"}</button>
+                        <button className="toggle-btn" onClick={() => dispatch(toggleTheme())} style={{ padding: '10px' }}>
+                            {themeMode === "dark" ? "Current: Dark Mode" : "Current: Light Mode"}
+                        </button>
                     </div>
+
+                    {/* Add project form — only show on "mine" tab */}
                     {activeTab === "mine" && (
-                        <div className="project-form" >
+                        <div className="project-form">
                             <form onSubmit={add_Project}>
                                 <label>Title</label>
                                 <input type="text" onChange={(e) => setTitle(e.target.value)} required />
@@ -193,12 +208,13 @@ function Projects() {
                                 <label>Due Date</label>
                                 <input type="date" onChange={(e) => setDate(e.target.value)} required />
 
-                                <button type="submit" style={{ border: '1px solid var(--accent-amber)' }}>  ADD+ </button>
+                                <button type="submit" style={{ border: '1px solid var(--accent-amber)' }}>ADD+</button>
                             </form>
-                        </div >)}
+                        </div>
+                    )}
                 </div>
 
-
+                {/* Tabs */}
                 <div style={{ display: 'flex', gap: '10px', margin: '20px 0px 10px 0px' }}>
                     <button
                         onClick={() => setActiveTab("mine")}
@@ -218,9 +234,8 @@ function Projects() {
                     </button>
                 </div>
 
-
-
-                <div style={{ maxWidth: '800px' }}>
+                <div style={{ maxWidth: '900px' }}>
+                    {/* Search and filter bar */}
                     <div className="Search-Bar">
                         <input
                             style={{ width: '40%' }}
@@ -241,11 +256,12 @@ function Projects() {
                         </select>
                     </div>
 
+                    {/* Project list */}
                     <div className="user-projects">
                         {Filtered_Projects.length === 0 && <div>No projects found</div>}
                         <ol>
                             {Filtered_Projects.map((p, i) =>
-                                EditId != p._id ? (
+                                EditId !== p._id ? (
                                     <li key={p._id}>
                                         <NavLink to={`/projects/${p._id}`}>
                                             <strong>{p.Title}</strong>
@@ -317,8 +333,8 @@ function Projects() {
                                             </div>
                                         )}
                                     </li>
-                                )
-                                    : (<div key={p._id} className="edit-form">
+                                ) : (
+                                    <div key={p._id} className="edit-form">
                                         <form>
                                             <label>Title</label>
                                             <input type="text" defaultValue={p.Title} onChange={(e) => setEditTitle(e.target.value)} required />
@@ -355,7 +371,7 @@ function Projects() {
                                             </div>
                                         </form>
                                     </div>
-                                    )
+                                )
                             )}
                         </ol>
                     </div>
