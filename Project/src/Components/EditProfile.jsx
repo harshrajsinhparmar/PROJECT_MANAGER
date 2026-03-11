@@ -2,8 +2,9 @@ import React, { useState } from "react"
 import "./LoginPage.css"
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux";
+import { deleteProfile, updateProfile } from "./Redux";
 // NEW LINE
-import { addProjectDb, deleteProjectDb, editProjectDb, toggleTheme, fetchProjects } from "./Redux";
+
 function EditProfile() {
     const CURRENT_USER = JSON.parse(localStorage.getItem("CURRENTUSER"));
     const navigate = useNavigate();
@@ -13,19 +14,19 @@ function EditProfile() {
 
     const delete_profile = (e) => {
         e.preventDefault();
-        dispatch(deleteprofile(CURRENT_USER[0].id))
+        dispatch(deleteProfile(CURRENT_USER[0]._id)).then(() => {
+            navigate("/");
+        });
     }
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        const new_profile = {
-            id: CURRENT_USER[0].id,
-            email: Email,
-            password: Password
-        }
-        console.log("HANDLESUBMIt", new_profile);
-        dispatch(updateProfile(new_profile));
-        navigate("/projects");
+        dispatch(updateProfile({
+            id: CURRENT_USER[0]._id,   // MongoDB _id
+            updatedData: { email: Email, password: Password }
+        })).then(() => {
+            navigate("/projects");
+        });
     }
 
     return (<div style={{ padding: '10px' }}>

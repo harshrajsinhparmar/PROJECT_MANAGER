@@ -1,10 +1,17 @@
-import React from "react"
-import { useSelector } from "react-redux"
+import React, { useEffect } from "react"
+import { useDispatch, useSelector } from "react-redux"
 import { useNavigate } from "react-router-dom";
 import "./DashBoard.css"
 import GanttView from "./GanttView";
+import { fetchUserProjects } from "./Redux";
 function DashBoard() {
-    const CURRENTUSER_ID = JSON.parse(localStorage.getItem("CURRENTUSER"))[0].id;
+    const CURRENTUSER_ID = JSON.parse(localStorage.getItem("CURRENTUSER"))[0]._id;
+    const dispatch = useDispatch();
+    useEffect(() => {
+        dispatch(fetchUserProjects(CURRENTUSER_ID));
+    }, []);
+
+
     const Dashboard = useSelector((state) => state.registration.Projects.filter((p) => p.user_id == CURRENTUSER_ID));
 
     const Active_Projects = Dashboard.filter((p) => p.status == "active");
