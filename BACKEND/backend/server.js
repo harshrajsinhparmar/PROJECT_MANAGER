@@ -83,12 +83,15 @@ app.get('/api/users', async (req, res) => {
     }
 });
 
-app.get('/api/users/search/:email', async (req, res) => {
+app.get('/api/users/search', async (req, res) => {
     try {
-        const users = await User.find(
-            { email: { $regex: req.params.email, $options: 'i' } },
-            '_id email role'
-        );
+        const { q } = req.query;
+        const users = await User.find({
+            $or: [
+                { name: { $regex: q, $options: 'i' } },
+                { email: { $regex: q, $options: 'i' } }
+            ]
+        }).select('_id name email role');
         res.json(users);
     } catch (err) {
         console.error("SEARCH USER ERROR:", err.message);
@@ -96,16 +99,7 @@ app.get('/api/users/search/:email', async (req, res) => {
     }
 });
 
-// GET NOTIFICATIONS for a user
-app.get('/api/users/:id/notifications', async (req, res) => {
-    try {
-        const user = await User.findById(req.params.id, 'notifications');
-        res.json(user.notifications);
-    } catch (err) {
-        console.error("GET NOTIFICATIONS ERROR:", err.message);
-        res.status(500).json({ message: err.message });
-    }
-});
+
 
 // GET NOTIFICATIONS for a user
 app.get('/api/users/:id/notifications', async (req, res) => {
@@ -117,6 +111,19 @@ app.get('/api/users/:id/notifications', async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 });
+
+app.put('/api/users/:id/notifications/read', async (req, res) => {
+    try {
+        await User.updateOne(
+            { _id: req.params.id },
+            { $set: { 'notifications.$[].read': true } }  // $[] = all array elements
+        );
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 
 // --- PROJECT ROUTES ---
 
@@ -188,10 +195,18 @@ app.put('/api/projects/:id', async (req, res) => {
         const updated = await Project.findByIdAndUpdate(
             req.params.id,
             {
-                ...req.body,
+                $set: {
+                    Title: req.body.Title,
+                    Description: req.body.Description,
+                    status: req.body.status,
+                    priority: req.body.priority,
+                    tags: req.body.tags,
+                    sprint: req.body.sprint,
+                    date: req.body.date,
+                },
                 $push: { activityLog: logEntry }
             },
-            { returnDocument: 'after' }
+            { new: true }
         );
         res.json(updated);
     } catch (err) {
