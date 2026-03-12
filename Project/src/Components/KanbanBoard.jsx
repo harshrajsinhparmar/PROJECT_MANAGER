@@ -81,7 +81,7 @@ function KanbanBoard({ projects, activeTab, onEdit, onDelete }) {
         setDraggingId(null);
         setOverColumn(null);
     };
-
+    console.log("draggingId", draggingId, "overColumn", overColumn);
     return (
         <div className="kanban-wrapper">
             <div className="kanban-board">
@@ -142,7 +142,12 @@ function KanbanBoard({ projects, activeTab, onEdit, onDelete }) {
                                         }}
                                     >
                                         {/* Title link */}
-                                        <NavLink to={`/projects/${p._id}`} className="kanban-card-title">
+                                        <NavLink
+                                            to={`/projects/${p._id}`}
+                                            className="kanban-card-title"
+                                            draggable={false}
+                                            onClick={(e) => { if (draggingId) e.preventDefault(); }}
+                                        >
                                             {p.Title}
                                         </NavLink>
 
