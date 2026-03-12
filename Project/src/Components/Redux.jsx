@@ -69,6 +69,16 @@ export const markNotificationsRead = createAsyncThunk("users/markNotificationsRe
         return rejectWithValue(message);
     }
 });
+// NEW — search users by email query
+export const searchUsers = createAsyncThunk("users/search", async (q, { rejectWithValue }) => {
+    try {
+        const res = await axios.get(`${USERS_URL}/search`, { params: { q } });
+        return res.data;
+    } catch (err) {
+        const message = err.response?.data?.message || err.message || "Search failed";
+        return rejectWithValue(message);
+    }
+});
 
 // --- PROJECT THUNKS ---
 // Update fetchUserProjects to fetch both created and assigned
@@ -134,6 +144,17 @@ export const assignProjectDb = createAsyncThunk("projects/assign", async ({ proj
     }
 });
 
+// NEW — remove a user from a project's assignedTo
+export const removeAssigneeDb = createAsyncThunk("projects/removeAssignee", async ({ projectId, userId }, { rejectWithValue }) => {
+    try {
+        const res = await axios.delete(`${API_URL}/${projectId}/assign/${userId}`);
+        return res.data;
+    } catch (err) {
+        const message = err.response?.data?.message || err.message || "Remove failed";
+        return rejectWithValue(message);
+    }
+});
+
 const FORMSLICE = createSlice({
     name: 'registration',
     initialState: {
@@ -141,6 +162,7 @@ const FORMSLICE = createSlice({
         assignedProjects: [],   // projects assigned to me
         currentUser: JSON.parse(localStorage.getItem("CURRENTUSER"))?.[0] || null,
         notifications: [],
+        userSearchResults: [],
         mode: localStorage.getItem("theme") || "dark",
         status: 'idle',
         error: null
@@ -156,8 +178,11 @@ const FORMSLICE = createSlice({
             state.createdProjects = [];
             state.assignedProjects = [];
             state.notifications = [];
+            userSearchResults = [];
             localStorage.removeItem("CURRENTUSER");
             console.log("END OF LOGOUT");
+        }, clearUserSearch: (state) => {
+            state.userSearchResults = [];
         }
 
     },
@@ -188,6 +213,10 @@ const FORMSLICE = createSlice({
             .addCase(markNotificationsRead.fulfilled, (state) => {
                 state.notifications = state.notifications.map(n => ({ ...n, read: true }));
             })
+            .addCase(searchUsers.fulfilled, (state, action) => {
+                state.userSearchResults = action.payload;
+            })
+
             // Project cases
             .addCase(fetchCreatedProjects.fulfilled, (state, action) => {
                 state.createdProjects = action.payload;
@@ -214,9 +243,12 @@ const FORMSLICE = createSlice({
             .addCase(assignProjectDb.fulfilled, (state, action) => {
                 const index = state.createdProjects.findIndex(p => p._id === action.payload._id);
                 if (index !== -1) state.createdProjects[index] = action.payload;
+            }).addCase(removeAssigneeDb.fulfilled, (state, action) => {
+                const index = state.createdProjects.findIndex(p => p._id === action.payload._id);
+                if (index !== -1) state.createdProjects[index] = action.payload;
             });
     }
 });
 
-export const { toggleTheme, logoutUser } = FORMSLICE.actions;
+export const { toggleTheme, logoutUser, clearUserSearch } = FORMSLICE.actions;
 export const store = configureStore({ reducer: { registration: FORMSLICE.reducer } });

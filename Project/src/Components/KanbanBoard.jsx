@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import "./KanbanBoard.css";
+import { useDispatch } from "react-redux";
+import { editProjectDb } from "./Redux";
 
 const STATUS_OPTIONS = ['backlog', 'todo', 'inprogress', 'inreview', 'onhold', 'done', 'complete'];
 
@@ -31,13 +33,71 @@ const PRIORITY_COLORS = {
 };
 
 function KanbanBoard({ projects, activeTab, onEdit, onDelete }) {
+    const dispatch = useDispatch();
+
+    const [draggingId, setDraggingId] = useState(null);
+    const [overColumn, setOverColumn] = useState(null);
+
+    const onDragStart = (e, projectId) => {
+        setDraggingId(projectId);
+        e.dataTransfer.effectAllowed = 'move';
+        // required for Firefox — without this Firefox cancels the drag
+        e.dataTransfer.setData('text/plain', projectId);
+    };
+
+    const onDragOver = (e, status) => {
+        // e.preventDefault() is REQUIRED — without it onDrop will never fire
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        setOverColumn(status);
+    };
+
+    const onDrop = (e, status) => {
+        e.preventDefault();
+        if (!draggingId) return;
+
+        const project = projects.find(p => p._id === draggingId);
+        if (project && project.status !== status) {
+            dispatch(editProjectDb({
+                id: draggingId,
+                updatedData: {
+                    Title: project.Title,
+                    Description: project.Description,
+                    status: status,
+                    priority: project.priority,
+                    tags: project.tags,
+                    sprint: project.sprint,
+                    date: project.date,
+                }
+            }));
+        }
+
+        setDraggingId(null);
+        setOverColumn(null);
+    };
+
+    const onDragEnd = () => {
+        // cleanup if dropped outside any column
+        setDraggingId(null);
+        setOverColumn(null);
+    };
+
     return (
         <div className="kanban-wrapper">
             <div className="kanban-board">
                 {STATUS_OPTIONS.map(status => {
                     const cards = projects.filter(p => p.status === status);
+                    const isOver = overColumn === status;
                     return (
-                        <div key={status} className="kanban-column">
+                        <div key={status} className="kanban-column"
+                            onDragOver={(e) => onDragOver(e, status)}
+                            onDrop={(e) => onDrop(e, status)}
+                            onDragLeave={() => setOverColumn(null)}
+                            style={{
+                                outline: isOver ? `2px solid ${STATUS_COLORS[status]}` : 'none',
+                                background: isOver ? 'rgba(255,255,255,0.03)' : undefined,
+                                transition: 'outline 0.15s, background 0.15s'
+                            }}>
                             {/* Column Header */}
                             <div className="kanban-col-header">
                                 <span className="kanban-dot" style={{
@@ -50,11 +110,37 @@ function KanbanBoard({ projects, activeTab, onEdit, onDelete }) {
                             {/* Column Body */}
                             <div className="kanban-col-body">
                                 {cards.length === 0 && (
-                                    <div className="kanban-empty">No tasks</div>
+                                    <div
+                                        className="kanban-empty"
+                                        style={{
+                                            border: isOver
+                                                ? `2px dashed ${STATUS_COLORS[status]}`
+                                                : '2px dashed transparent',
+                                            borderRadius: '6px',
+                                            padding: '16px',
+                                            transition: 'border 0.15s',
+                                            color: isOver ? STATUS_COLORS[status] : undefined
+                                        }}
+                                    >
+                                        {isOver ? 'Drop here' : 'No tasks'}
+                                    </div>
                                 )}
 
+
                                 {cards.map(p => (
-                                    <div key={p._id} className="kanban-card">
+                                    <div
+                                        key={p._id}
+                                        className="kanban-card"
+                                        draggable
+                                        onDragStart={(e) => onDragStart(e, p._id)}
+                                        onDragEnd={onDragEnd}
+                                        style={{
+                                            opacity: draggingId === p._id ? 0.4 : 1,
+                                            cursor: 'grab',
+                                            userSelect: 'none',
+                                            transition: 'opacity 0.15s'
+                                        }}
+                                    >
                                         {/* Title link */}
                                         <NavLink to={`/projects/${p._id}`} className="kanban-card-title">
                                             {p.Title}
@@ -105,29 +191,35 @@ function KanbanBoard({ projects, activeTab, onEdit, onDelete }) {
                                         {/* Action buttons — only on "mine" tab */}
                                         {activeTab === "mine" && (
                                             <div className="kanban-card-actions">
-                                                <button
-                                                    className="kb-edit-btn"
-                                                    onClick={() => onEdit(p)}
-                                                >
-                                                    ✏️ Edit
-                                                </button>
-                                                <button
-                                                    className="kb-del-btn"
-                                                    onClick={() => onDelete(p._id)}
-                                                >
-                                                    🗑️
-                                                </button>
+                                                <button className="kb-edit-btn" onClick={() => onEdit(p)}>Edit</button>
+                                                <button className="kb-del-btn" onClick={() => onDelete(p._id)}>Delete</button>
                                             </div>
                                         )}
 
                                         {/* Assigned tab info */}
                                         {activeTab === "assigned" && (
-                                            <div className="kanban-card-assigned">
-                                                Assigned by: {p.createdBy}
-                                            </div>
+                                            <div className="kanban-card-assigned">  Assigned by: {p.createdBy}</div>
                                         )}
                                     </div>
                                 ))}
+
+                                {/* Drop hint at bottom when column already has cards */}
+                                {isOver && cards.length > 0 && draggingId && (
+                                    <div style={{
+                                        border: `2px dashed ${STATUS_COLORS[status]}`,
+                                        borderRadius: '6px',
+                                        height: '44px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: STATUS_COLORS[status],
+                                        fontSize: '12px',
+                                        opacity: 0.7,
+                                        marginTop: '4px'
+                                    }}>
+                                        Drop here
+                                    </div>
+                                )}
                             </div>
                         </div>
                     );
