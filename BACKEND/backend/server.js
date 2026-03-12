@@ -264,41 +264,6 @@ app.put('/api/projects/:id/assign', async (req, res) => {
     }
 });
 
-app.put('/api/projects/:id/assign', async (req, res) => {
-    try {
-        const { assignToUserId } = req.body;
-        const project = await Project.findById(req.params.id);
-        if (!project) return res.status(404).json({ message: "Project not found" });
-
-        if (!project.assignedTo.includes(assignToUserId)) {
-            project.assignedTo.push(assignToUserId);
-            project.activityLog.push({
-                action: `Project assigned to user ${assignToUserId}`,
-                timestamp: new Date()
-            });
-            await project.save();
-        }
-
-        await User.updateOne(
-            { _id: assignToUserId },
-            {
-                $push: {
-                    notifications: {
-                        message: `You have been assigned to project "${project.Title}"`,
-                        projectId: project._id,
-                        read: false,
-                        createdAt: new Date()
-                    }
-                }
-            }
-        );
-
-        res.json(project);
-    } catch (err) {
-        console.error("ASSIGN PROJECT ERROR:", err.message);
-        res.status(500).json({ message: err.message });
-    }
-});
 
 // REMOVE an assignee from a project
 app.delete('/api/projects/:id/assign/:userId', async (req, res) => {

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux";
 import KanbanBoard from "./KanbanBoard";
-import { addProjectDb, assignProjectDb, clearUserSearch, deleteProjectDb, editProjectDb, logoutUser, removeAssigneeDb, toggleTheme } from "./Redux";
+import { addProjectDb, assignProjectDb, clearUserSearch, deleteProjectDb, editProjectDb, fetchAssignedProjects, fetchCreatedProjects, logoutUser, removeAssigneeDb, searchUsers, toggleTheme } from "./Redux";
 import { createPortal } from "react-dom";
 import './Projects.css'
 import { NavLink, useNavigate } from "react-router-dom";
@@ -27,6 +27,9 @@ const PRIORITY_COLORS = {
 
 
 function Projects() {
+
+
+
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const CURRENTUSER_ID = JSON.parse(localStorage.getItem("CURRENTUSER"))[0]._id;
@@ -55,6 +58,11 @@ function Projects() {
     const [Search_Priority, setSearch_Priority] = useState("all");
 
     const activeProjects = activeTab === "mine" ? createdProjects : assignedProjects;
+
+    useEffect(() => {
+        dispatch(fetchCreatedProjects(CURRENTUSER_ID));
+        dispatch(fetchAssignedProjects(CURRENTUSER_ID));
+    }, []);
 
     const Filtered_Projects = activeProjects
         .filter((p) => p.Title.toLocaleLowerCase().includes(Search.toLocaleLowerCase().trim()))
@@ -341,9 +349,6 @@ function Projects() {
                                             <span style={{
                                                 background: STATUS_COLORS[p.status] || 'gray',
                                                 color: 'white',
-                                                padding: '2px 10px',
-                                                borderRadius: '12px',
-                                                fontSize: '12px',
                                                 marginLeft: '10px'
                                             }}>
                                                 {p.status}
@@ -386,13 +391,30 @@ function Projects() {
                                                 </span>
                                             ))}
 
-                                            {/* Action buttons — only on "mine" tab */}
+
                                             {activeTab === "mine" && (
-                                                <div style={{ display: "flex", gap: "10px", marginTop: '6px' }}>
+                                                <div style={{ display: "flex", gap: "10px", marginTop: '6px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
                                                     <button style={{ border: '1px solid var(--accent-amber)' }} onClick={() => startEditing(p)}>Edit</button>
                                                     <button style={{ background: 'red', color: 'white' }} onClick={() => setdeleteId(p._id)}>Delete</button>
+
+                                                    {/* ASSIGN BUTTON — managers only */}
+                                                    {isManager && (
+                                                        <button
+                                                            onClick={() => assignPanelProjectId === p._id ? closeAssignPanel() : openAssignPanel(p._id)}
+                                                            style={{
+                                                                border: assignPanelProjectId === p._id
+                                                                    ? '2px solid var(--accent-amber)'
+                                                                    : '1px solid #a855f7',
+                                                                color: '#a855f7',
+                                                                padding: '2px 10px'
+                                                            }}>
+                                                            👥 Assign
+                                                        </button>
+                                                    )}
                                                 </div>
                                             )}
+
+
 
                                             {/* Assigned tab shows who assigned it */}
                                             {activeTab === "assigned" && (

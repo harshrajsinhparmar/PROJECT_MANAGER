@@ -60,7 +60,7 @@ export const fetchNotifications = createAsyncThunk(
     }
 );
 
-export const markNotificationsRead = createAsyncThunk("users/markNotificationsRead", async (userId) => {
+export const markNotificationsRead = createAsyncThunk("users/markNotificationsRead", async (userId, { rejectWithValue }) => {
     try {
         await axios.put(`${USERS_URL}/${userId}/notifications/read`);
         return true;
@@ -178,7 +178,7 @@ const FORMSLICE = createSlice({
             state.createdProjects = [];
             state.assignedProjects = [];
             state.notifications = [];
-            userSearchResults = [];
+            state.userSearchResults = [];
             localStorage.removeItem("CURRENTUSER");
             console.log("END OF LOGOUT");
         }, clearUserSearch: (state) => {
