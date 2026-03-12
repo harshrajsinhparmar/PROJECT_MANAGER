@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux";
 import KanbanBoard from "./KanbanBoard";
-import { addProjectDb, deleteProjectDb, editProjectDb, logoutUser, toggleTheme } from "./Redux";
+import { addProjectDb, assignProjectDb, clearUserSearch, deleteProjectDb, editProjectDb, logoutUser, removeAssigneeDb, toggleTheme } from "./Redux";
 import { createPortal } from "react-dom";
 import './Projects.css'
 import { NavLink, useNavigate } from "react-router-dom";
@@ -32,9 +32,12 @@ function Projects() {
     const CURRENTUSER_ID = JSON.parse(localStorage.getItem("CURRENTUSER"))[0]._id;
     const CURRENT_USER = JSON.parse(localStorage.getItem("CURRENTUSER"));
     const themeMode = useSelector((state) => state.registration.mode);
+    const isManager = CURRENT_USER[0].role === 'manager';
 
     const createdProjects = useSelector((state) => state.registration.createdProjects);
     const assignedProjects = useSelector((state) => state.registration.assignedProjects);
+    const userSearchResults = useSelector((state) => state.registration.userSearchResults);
+
 
     const [activeTab, setActiveTab] = useState("mine");
     const [viewMode, setViewMode] = useState("list");
@@ -117,6 +120,41 @@ function Projects() {
     }
 
     const [deleteId, setdeleteId] = useState(0);
+
+    // ASSIGN PANEL STATE
+    const [assignPanelProjectId, setAssignPanelProjectId] = useState(null);
+    const [assignSearchQ, setAssignSearchQ] = useState("");
+
+    const openAssignPanel = (projectId) => {
+        setAssignPanelProjectId(projectId);
+        setAssignSearchQ("");
+        dispatch(clearUserSearch());
+    };
+
+    const closeAssignPanel = () => {
+        setAssignPanelProjectId(null);
+        setAssignSearchQ("");
+        dispatch(clearUserSearch());
+    };
+    const handleAssignSearch = (e) => {
+        const q = e.target.value;
+        setAssignSearchQ(q);
+        if (q.trim().length >= 1) {
+            dispatch(searchUsers(q.trim()));
+        } else {
+            dispatch(clearUserSearch());
+        }
+    };
+
+
+    const handleAssign = (projectId, userId) => {
+        dispatch(assignProjectDb({ projectId, assignToUserId: userId }));
+    };
+
+    const handleRemoveAssignee = (projectId, userId) => {
+        dispatch(removeAssigneeDb({ projectId, userId }));
+    };
+
 
 
     const logout = () => {
@@ -244,7 +282,7 @@ function Projects() {
 
                                     cursor: 'pointer'
                                 }}>
-                                📋 List
+                                List
                             </button>
                             <button
                                 onClick={() => setViewMode("kanban")}
@@ -257,7 +295,7 @@ function Projects() {
 
                                     cursor: 'pointer'
                                 }}>
-                                📊 Kanban
+                                Kanban
                             </button>
                         </div>
                         <input
@@ -360,6 +398,117 @@ function Projects() {
                                             {activeTab === "assigned" && (
                                                 <div style={{ fontSize: '12px', color: 'gray', marginTop: '4px' }}>
                                                     Assigned by: {p.createdBy}
+                                                </div>
+                                            )}
+
+                                            {/* ASSIGN PANEL — inline under the project card */}
+                                            {assignPanelProjectId === p._id && (
+                                                <div style={{
+                                                    marginTop: '10px',
+                                                    padding: '12px',
+                                                    border: '1px solid #a855f7',
+                                                    borderRadius: '8px',
+                                                    background: '#0d0d1a',
+                                                    maxWidth: '420px'
+                                                }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                                                        <strong style={{ color: '#a855f7' }}>Assign Members</strong>
+                                                        <button
+                                                            onClick={closeAssignPanel}
+                                                            style={{ background: 'none', border: 'none', color: 'gray', cursor: 'pointer', fontSize: '18px', lineHeight: 1 }}>
+                                                            ×
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Current assignees */}
+                                                    {p.assignedTo && p.assignedTo.length > 0 && (
+                                                        <div style={{ marginBottom: '10px' }}>
+                                                            <div style={{ fontSize: '12px', color: 'gray', marginBottom: '5px' }}>Currently assigned:</div>
+                                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                                                {p.assignedTo.map((uid) => (
+                                                                    <span key={uid} style={{
+                                                                        display: 'flex', alignItems: 'center', gap: '4px',
+                                                                        background: '#1a1a2e',
+                                                                        border: '1px solid #333',
+                                                                        borderRadius: '12px',
+                                                                        padding: '2px 8px',
+                                                                        fontSize: '12px'
+                                                                    }}>
+                                                                        <span style={{ color: '#a855f7' }}>●</span>
+                                                                        <span style={{ color: 'gray' }}>{String(uid).slice(-6)}</span>
+                                                                        <button
+                                                                            onClick={() => handleRemoveAssignee(p._id, uid)}
+                                                                            style={{
+                                                                                background: 'none', border: 'none',
+                                                                                color: 'gray', cursor: 'pointer',
+                                                                                fontSize: '14px', lineHeight: 1, padding: 0
+                                                                            }}>
+                                                                            ×
+                                                                        </button>
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Search input */}
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Search by email..."
+                                                        value={assignSearchQ}
+                                                        onChange={handleAssignSearch}
+                                                        style={{ width: '100%', padding: '6px 10px', boxSizing: 'border-box', marginBottom: '8px' }}
+                                                    />
+
+                                                    {/* Search results */}
+                                                    {userSearchResults.length > 0 && (
+                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                            {userSearchResults
+                                                                .filter(u => u._id !== CURRENTUSER_ID)
+                                                                .map(u => {
+                                                                    const alreadyAssigned = p.assignedTo?.some(uid => String(uid) === String(u._id));
+                                                                    return (
+                                                                        <div key={u._id} style={{
+                                                                            display: 'flex', justifyContent: 'space-between',
+                                                                            alignItems: 'center', padding: '6px 8px',
+                                                                            background: '#1a1a2e', borderRadius: '6px',
+                                                                            border: '1px solid #333'
+                                                                        }}>
+                                                                            <div>
+                                                                                <span style={{ fontSize: '13px' }}>{u.email}</span>
+                                                                                <span style={{
+                                                                                    fontSize: '11px', marginLeft: '6px',
+                                                                                    color: u.role === 'manager' ? '#f2aa4d' : '#4a9eff'
+                                                                                }}>
+                                                                                    {u.role}
+                                                                                </span>
+                                                                            </div>
+                                                                            {alreadyAssigned ? (
+                                                                                <span style={{ fontSize: '12px', color: 'gray' }}>assigned ✓</span>
+                                                                            ) : (
+                                                                                <button
+                                                                                    onClick={() => handleAssign(p._id, u._id)}
+                                                                                    style={{
+                                                                                        border: '1px solid #a855f7',
+                                                                                        color: '#a855f7',
+                                                                                        padding: '2px 10px',
+                                                                                        fontSize: '12px',
+                                                                                        cursor: 'pointer',
+                                                                                        background: 'transparent'
+                                                                                    }}>
+                                                                                    + Assign
+                                                                                </button>
+                                                                            )}
+                                                                        </div>
+                                                                    );
+                                                                })
+                                                            }
+                                                        </div>
+                                                    )}
+
+                                                    {assignSearchQ.length >= 1 && userSearchResults.length === 0 && (
+                                                        <div style={{ fontSize: '13px', color: 'gray' }}>No users found</div>
+                                                    )}
                                                 </div>
                                             )}
                                         </li>
