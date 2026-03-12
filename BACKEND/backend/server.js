@@ -163,7 +163,7 @@ app.post('/api/projects', async (req, res) => {
     }
 });
 
-// EDIT a project — logs activity + notifies on status change
+// EDIT a project — FIX: $set now includes subtasks, checklist, milestones
 app.put('/api/projects/:id', async (req, res) => {
     try {
         const project = await Project.findById(req.params.id);
@@ -192,18 +192,23 @@ app.put('/api/projects/:id', async (req, res) => {
             }
         }
 
+        // Build $set dynamically — only include fields that were sent
+        const setFields = {};
+        const allowedFields = [
+            'Title', 'Description', 'status', 'priority',
+            'tags', 'sprint', 'date',
+            'subtasks', 'checklist', 'milestones'  // FIX: added these 3
+        ];
+        allowedFields.forEach(field => {
+            if (req.body[field] !== undefined) {
+                setFields[field] = req.body[field];
+            }
+        });
+        console.log("SET FIELDS:", JSON.stringify(setFields));
         const updated = await Project.findByIdAndUpdate(
             req.params.id,
             {
-                $set: {
-                    Title: req.body.Title,
-                    Description: req.body.Description,
-                    status: req.body.status,
-                    priority: req.body.priority,
-                    tags: req.body.tags,
-                    sprint: req.body.sprint,
-                    date: req.body.date,
-                },
+                $set: setFields,
                 $push: { activityLog: logEntry }
             },
             { new: true }
@@ -214,7 +219,6 @@ app.put('/api/projects/:id', async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 });
-
 // DELETE a project
 app.delete('/api/projects/:id', async (req, res) => {
     try {

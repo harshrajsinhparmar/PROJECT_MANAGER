@@ -82,6 +82,22 @@ export const searchUsers = createAsyncThunk("users/search", async (q, { rejectWi
 
 // --- PROJECT THUNKS ---
 // Update fetchUserProjects to fetch both created and assigned
+
+export const updateProjectDetails = createAsyncThunk(
+    "projects/updateDetails",
+    async ({ id, field, value }, { rejectWithValue }) => {
+        try {
+
+            const res = await axios.put(`${API_URL}/${id}`, { [field]: value });
+            return res.data;
+
+        } catch (err) {
+            const message = err.response?.data?.message || err.message || "Update failed";
+            return rejectWithValue(message);
+        }
+    }
+);
+
 export const fetchCreatedProjects = createAsyncThunk("projects/fetchCreated", async (userId, { rejectWithValue }) => {
     try {
         const res = await axios.get(`${API_URL}/created/${userId}`);
@@ -246,6 +262,16 @@ const FORMSLICE = createSlice({
             }).addCase(removeAssigneeDb.fulfilled, (state, action) => {
                 const index = state.createdProjects.findIndex(p => p._id === action.payload._id);
                 if (index !== -1) state.createdProjects[index] = action.payload;
+            }).addCase(updateProjectDetails.fulfilled, (state, action) => {
+                console.log("PAYLOAD ID:", action.payload._id);
+                console.log("CREATED IDS:", state.createdProjects.map(p => p._id));
+                const createdIndex = state.createdProjects.findIndex(p => p._id === action.payload._id);
+                console.log("FOUND AT INDEX:", createdIndex);
+                console.log("SUBTASKS IN PAYLOAD:", action.payload.subtasks);
+                if (createdIndex !== -1) state.createdProjects[createdIndex] = action.payload;
+
+                const assignedIndex = state.assignedProjects.findIndex(p => p._id === action.payload._id);
+                if (assignedIndex !== -1) state.assignedProjects[assignedIndex] = action.payload;
             });
     }
 });
