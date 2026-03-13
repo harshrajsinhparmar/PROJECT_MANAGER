@@ -145,6 +145,7 @@ function Details() {
         fontWeight: activeTab === tab ? 'bold' : 'normal',
         fontSize: '14px'
     });
+    
 
     return (
         <div className="details-wrapper">
